@@ -29,11 +29,21 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         navigate("/");
       }
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to log in. Please try again."
-      );
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        // Axios-specific error
+        setError(
+          err.response?.data?.message || "Failed to log in. Please try again."
+        );
+      } else if (err instanceof Error) {
+        // Generic error
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred.");
+      }
     }
+
+    setError("");
   };
 
   return (

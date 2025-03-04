@@ -1,4 +1,5 @@
-import express from "express";
+// src/server.ts
+import express, { Application } from "express";
 import http from "http";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -13,8 +14,11 @@ import { handleSocketConnection } from "./socket";
 // Load environment variables
 dotenv.config();
 
-const app = express();
+// Initialize Express app and HTTP server
+const app: Application = express();
 const server = http.createServer(app);
+
+// Initialize Socket.IO with CORS configuration
 const io = new Server(server, {
   cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
 });
@@ -23,27 +27,35 @@ const io = new Server(server, {
 app.use(cors());
 app.use(bodyParser.json());
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/video", videoRoutes);
 
-// Socket.IO
+// Socket.IO connection handler
 io.on("connection", (socket) => handleSocketConnection(socket, io));
 
 // MongoDB Connection
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/defaultDB";
+const MONGO_URI: string | undefined = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ MongoDB URI is not defined. Please check your .env file.");
+  process.exit(1);
+}
 
 mongoose
   .connect(MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .catch((err: unknown) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 // Server Initialization
-const PORT = process.env.PORT || 5000;
+const PORT: string | number = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 );
 
 export { io };
+export default app;
