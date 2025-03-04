@@ -36,7 +36,7 @@ const Signup = () => {
 
   return (
     <motion.div
-      className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-4"
+      className="flex items-center justify-center h-screen bg-white p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -110,9 +110,6 @@ const Signup = () => {
             Log in
           </span>
         </p>
-
-        <div className="absolute -top-5 -right-5 w-16 h-16 bg-purple-500 rounded-full filter blur-lg opacity-50 animate-pulse"></div>
-        <div className="absolute -bottom-5 -left-5 w-16 h-16 bg-pink-500 rounded-full filter blur-lg opacity-50 animate-pulse"></div>
       </motion.div>
     </motion.div>
   );

@@ -19,10 +19,7 @@ const Login = () => {
     try {
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
 
       if (response.data.token) {
@@ -45,17 +42,24 @@ const Login = () => {
 
   return (
     <motion.div
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      className="flex items-center justify-center min-h-screen bg-white p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <div className="bg-white p-8 rounded-lg shadow-xl w-96 text-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Login</h1>
+      <motion.div
+        className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg relative"
+        initial={{ y: 50 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 120 }}
+      >
+        <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+          Welcome Back!
+        </h1>
 
         {error && (
           <motion.p
-            className="text-red-600 bg-red-100 px-3 py-2 rounded-lg mb-4 text-sm"
+            className="text-red-600 bg-red-100 px-4 py-2 rounded-lg mb-4 text-sm"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -63,22 +67,22 @@ const Login = () => {
           </motion.p>
         )}
 
-        <div className="flex flex-col space-y-4">
+        <div className="space-y-6">
           <input
             type="email"
-            placeholder="Enter your email"
+            placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border-2 border-gray-300 focus:border-blue-500 outline-none p-3 rounded-md transition duration-200 w-full"
+            className="w-full p-3 border-2 border-gray-200 rounded-md focus:outline-none focus:border-blue-500 transition"
           />
 
-          <div className="relative w-full">
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border-2 border-gray-300 focus:border-blue-500 outline-none p-3 rounded-md transition duration-200 w-full"
+              className="w-full p-3 border-2 border-gray-200 rounded-md focus:outline-none focus:border-blue-500 transition"
             />
             <button
               type="button"
@@ -86,28 +90,31 @@ const Login = () => {
               className="absolute right-3 top-3 text-gray-600"
             >
               {showPassword ? (
-                <AiOutlineEyeInvisible size={20} />
+                <AiOutlineEyeInvisible size={24} />
               ) : (
-                <AiOutlineEye size={20} />
+                <AiOutlineEye size={24} />
               )}
             </button>
           </div>
 
           <button
             onClick={handleLogin}
-            className="bg-blue-500 text-white font-semibold px-6 py-3 rounded-md transition duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-3 rounded-md hover:shadow-lg transition-shadow"
           >
-            Login
+            Sign In
           </button>
         </div>
 
-        <p className="mt-4 text-sm text-gray-500">
+        <p className="mt-6 text-gray-500 text-sm text-center">
           Don't have an account?{" "}
-          <a href="/signup" className="text-blue-500 hover:underline">
+          <span
+            className="text-blue-500 cursor-pointer hover:underline"
+            onClick={() => navigate("/signup")}
+          >
             Sign Up
-          </a>
+          </span>
         </p>
-      </div>
+      </motion.div>
     </motion.div>
   );
 };
