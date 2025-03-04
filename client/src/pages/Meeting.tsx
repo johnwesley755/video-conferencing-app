@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
-
 import VideoPlayer from "../components/VideoPlayer";
 import CallControls from "../components/CallControls";
 
@@ -104,12 +103,17 @@ const Meeting = () => {
   };
 
   return (
-    <motion.div className="flex flex-col items-center min-h-screen p-8 bg-gray-100 text-gray-800">
-      <h1 className="text-4xl font-semibold mb-8">
+    <motion.div
+      className="flex flex-col items-center min-h-screen p-8 bg-gradient-to-br from-blue-100 via-white to-blue-50 text-gray-800"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h1 className="text-4xl font-bold mb-8 text-blue-700 drop-shadow-md mt-20">
         {id ? `Meeting ID: ${id}` : "Meeting ID Not Found"}
       </h1>
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-6 justify-center mb-6">
         <VideoPlayer
           stream={stream}
           muted={muted}
@@ -126,26 +130,42 @@ const Meeting = () => {
       </div>
 
       {isAdmin && (
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold mb-2">Participant Requests</h2>
-          {participants.map((p) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span>{p.id}</span>
-              <button
-                onClick={() => handleApprove(p.id)}
-                className="bg-green-500 px-2 py-1 rounded"
+        <motion.div
+          className="mt-8 w-full max-w-3xl bg-white p-6 rounded-lg shadow-lg"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h2 className="text-2xl font-semibold text-blue-600 mb-4">
+            Participant Requests
+          </h2>
+          <div className="space-y-4">
+            {participants.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between p-4 bg-blue-50 rounded-lg shadow-sm"
               >
-                Approve
-              </button>
-              <button
-                onClick={() => handleReject(p.id)}
-                className="bg-red-500 px-2 py-1 rounded"
-              >
-                Reject
-              </button>
-            </div>
-          ))}
-        </div>
+                <span className="text-lg text-gray-700 font-medium">
+                  {p.id}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(p.id)}
+                    className="px-4 py-2 bg-green-500 text-white rounded-md transition-transform transform hover:scale-105"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(p.id)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-md transition-transform transform hover:scale-105"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       <CallControls
