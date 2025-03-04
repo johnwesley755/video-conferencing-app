@@ -1,9 +1,12 @@
-import express from "express";
+// src/routes/authRoutes.ts
+import { Router } from "express";
 import { login, signup } from "../controllers/authController";
+import validationMiddleware from "../middlewares/validationMiddleware";
+import { authMiddleware } from "../middlewares/authMiddleware";
+import { getProfile } from "../controllers/authController";
+const router = Router();
 
-const router = express.Router();
-
-router.post("/login", login);
-router.post("/signup", signup);
-
+router.post("/signup", validationMiddleware.validateSignup, signup);
+router.post("/login", validationMiddleware.validateLogin, login);
+router.get("/profile", authMiddleware, getProfile);
 export default router;

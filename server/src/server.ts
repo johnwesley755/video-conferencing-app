@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import videoRoutes from "./routes/videoRoutes";
 import { handleSocketConnection } from "./socket";
+import { verifyToken } from "./middlewares/authMiddleware";
 
 // Load environment variables
 dotenv.config();
@@ -27,10 +28,12 @@ const io = new Server(server, {
 app.use(cors());
 app.use(bodyParser.json());
 
-// API Routes
+// Authentication and Public Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/video", videoRoutes);
+
+// Protected Routes
+app.use("/api/chat", verifyToken, chatRoutes);
+app.use("/api/video", verifyToken, videoRoutes);
 
 // Socket.IO connection handler
 io.on("connection", (socket) => handleSocketConnection(socket, io));
@@ -59,3 +62,5 @@ server.listen(PORT, () =>
 
 export { io };
 export default app;
+
+// src/server.ts

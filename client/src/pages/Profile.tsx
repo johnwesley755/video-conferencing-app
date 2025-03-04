@@ -1,68 +1,59 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { FaUserCircle, FaEnvelope, FaSignOutAlt } from "react-icons/fa";
+import axios from "axios";
 
-interface UserProfile {
-  username: string;
+interface User {
+  name: string;
   email: string;
 }
 
-const Profile = () => {
+const Profile: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    // Fetch profile data from localStorage
-    const storedUsername = localStorage.getItem("username");
-    const storedEmail = localStorage.getItem("email") || "example@email.com";
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-    console.log("Fetched Username:", storedUsername);
-    console.log("Fetched Email:", storedEmail);
+        if (!token) {
+          navigate("/login");
+          return;
+        }
 
-    if (storedUsername) {
-      setProfile({ username: storedUsername, email: storedEmail });
-    } else {
-      console.warn("No username found, redirecting to login.");
-      navigate("/login");
-    }
+        const response = await axios.get("/api/auth/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setUser(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("⚠️ Error fetching user profile:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchUserProfile();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
-    navigate("/login");
-  };
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!user) {
+    return <p>No user data available.</p>;
+  }
 
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <div className="bg-white bg-opacity-20 p-10 rounded-lg shadow-lg backdrop-blur-md flex flex-col items-center">
-        <FaUserCircle size={80} className="mb-4 text-white drop-shadow-lg" />
-        {profile ? (
-          <>
-            <h1 className="text-3xl font-bold mb-2">{profile.username}</h1>
-            <p className="flex items-center gap-2 mb-6 text-lg">
-              <FaEnvelope />
-              {profile.email}
-            </p>
-          </>
-        ) : (
-          <p className="text-lg mb-6">Loading profile...</p>
-        )}
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-500 text-white px-6 py-2 rounded-full shadow-lg hover:bg-red-600 transition transform hover:scale-105"
-        >
-          <FaSignOutAlt />
-          Logout
-        </button>
+    <div className="profile-container">
+      <h1>Profile Page</h1>
+      <div className="profile-card">
+        <h2>{user.name}</h2>
+        <p>Email: {user.email}</p>
+        <button onClick={() => navigate("/logout")}>Logout</button>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

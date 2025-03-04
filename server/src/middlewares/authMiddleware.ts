@@ -1,31 +1,52 @@
-// authMiddleware.ts
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = "your_jwt_secret";
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
-interface CustomRequest extends Request {
-  user?: string | JwtPayload;
-}
-
-export const authMiddleware = (
-  req: CustomRequest,
+// Middleware to verify JWT token for protected routes
+export const verifyToken = (
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  const token = req.headers["authorization"]?.split(" ")[1];
+
   if (!token) {
-    res.status(401).json({ message: "No token provided" });
+    res.status(401).json({ message: "⚠️ No token provided. Access denied." });
     return;
   }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      res.status(403).json({ message: "⚠️ Invalid token. Access denied." });
+      return;
+    }
+    (req as any).user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
+  });
 };
 
-export default authMiddleware;
+export default verifyToken;
+
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    res.status(401).json({ message: "❌ Unauthorized: No token provided" });
+    return;
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      res.status(403).json({ message: "❌ Forbidden: Invalid token" });
+      return;
+    }
+
+    (req as any).user = decoded;
+    next();
+  });
+};
