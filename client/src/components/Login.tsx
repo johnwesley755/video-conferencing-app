@@ -1,3 +1,4 @@
+// Login.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -25,7 +26,7 @@ const Login = () => {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        navigate("/");
+        navigate("/home"); // Navigate to home page after login
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -75,7 +76,6 @@ const Login = () => {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full p-3 border-2 border-gray-200 rounded-md focus:outline-none focus:border-blue-500 transition"
           />
-
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -104,16 +104,6 @@ const Login = () => {
             Sign In
           </button>
         </div>
-
-        <p className="mt-6 text-gray-500 text-sm text-center">
-          Don't have an account?{" "}
-          <span
-            className="text-blue-500 cursor-pointer hover:underline"
-            onClick={() => navigate("/signup")}
-          >
-            Sign Up
-          </span>
-        </p>
       </motion.div>
     </motion.div>
   );
