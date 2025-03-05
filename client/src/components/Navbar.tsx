@@ -1,72 +1,90 @@
-import { useState } from "react";
+// src/components/Navbar.tsx
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaHome, FaVideo, FaSignOutAlt } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { FiLogOut, FiUser, FiHome, FiMenu, FiX } from "react-icons/fi";
 
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
-    navigate("/login");
+    navigate("/logout");
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen((prev) => !prev);
   };
 
   return (
-    <nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link
-          to="/"
-          className="text-xl font-bold text-indigo-600 flex items-center gap-2"
-        >
-          <FaVideo className="text-indigo-500" />
-          Video App
-        </Link>
+    <nav className="bg-white p-4 shadow-md">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="text-blue-500 text-2xl font-bold">
+          <Link to="/">Video App</Link>
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex space-x-6">
           <Link
             to="/"
-            className="text-gray-700 hover:text-indigo-600 transition flex items-center gap-1"
+            className="text-black flex items-center space-x-1 hover:text-gray-700 transition"
           >
-            <FaHome />
-            Home
+            <FiHome />
+            <span>Home</span>
           </Link>
 
-          <div className="relative">
-            <button
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 transition"
-            >
-              <FaUserCircle size={24} />
-              Profile
-            </button>
+          <Link
+            to="/profile"
+            className="text-black flex items-center space-x-1 hover:text-gray-700 transition"
+          >
+            <FiUser />
+            <span>Profile</span>
+          </Link>
 
-            {isProfileOpen && (
-              <motion.div
-                className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Link
-                  to="/profile"
-                  className="block px-4 py-2 text-gray-700 hover:bg-indigo-100 transition"
-                >
-                  View Profile
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-red-500 hover:bg-red-100 transition"
-                >
-                  <FaSignOutAlt />
-                  Logout
-                </button>
-              </motion.div>
-            )}
-          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+          >
+            <FiLogOut />
+            <span>Logout</span>
+          </button>
         </div>
+
+        {/* Mobile Menu Toggle */}
+        <button
+          className="md:hidden text-black text-2xl focus:outline-none"
+          onClick={toggleMobileMenu}
+        >
+          {isMobileMenuOpen ? <FiX /> : <FiMenu />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden p-4">
+          <Link
+            to="/"
+            className="block text-black py-2 hover:bg-blue-500 rounded"
+            onClick={toggleMobileMenu}
+          >
+            <FiHome className="inline mr-2" />
+            Home
+          </Link>
+          <Link
+            to="/profile"
+            className="block text-black py-2 hover:bg-blue-500 rounded"
+            onClick={toggleMobileMenu}
+          >
+            <FiUser className="inline mr-2" />
+            Profile
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+          >
+            <FiLogOut />
+            <span>Logout</span>
+          </button>
+        </div>
+      )}
     </nav>
   );
 };

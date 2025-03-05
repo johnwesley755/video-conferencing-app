@@ -44,27 +44,20 @@ export const login = async (
       return;
     }
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { userId: user._id, name: user.name, email: user.email },
+      JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
     res.json({ token });
   } catch (error) {
     next(error);
   }
 };
-// Verify JWT Token Middleware
-export const verifyToken = (req: Request, res: Response, next: Function) => {
-  const token = req.headers["authorization"]?.split(" ")[1];
 
-  if (!token) return res.sendStatus(401);
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    (req as any).user = user;
-    next();
-  });
-};
-
+// Get User Profile
 export const getProfile = (req: Request, res: Response): void => {
   const user = (req as any).user;
 
@@ -74,4 +67,9 @@ export const getProfile = (req: Request, res: Response): void => {
   }
 
   res.json({ name: user.name, email: user.email });
+};
+
+// User Logout Controller
+export const logout = (req: Request, res: Response): void => {
+  res.status(200).json({ message: "✅ Successfully logged out" });
 };

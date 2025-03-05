@@ -21,7 +21,8 @@ export const verifyToken = (
       res.status(403).json({ message: "⚠️ Invalid token. Access denied." });
       return;
     }
-    (req as any).user = user;
+
+    (req as any).user = user; // Using 'any' to bypass TypeScript typing
     next();
   });
 };

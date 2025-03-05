@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import { AnimatePresence } from "framer-motion";
 import Login from "./components/Login";
+import Logout from "./components/Logout";
 import Signup from "./components/Signup";
 import Profile from "./pages/Profile";
 import { ReactNode } from "react";
@@ -34,7 +35,7 @@ const App = () => (
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
+        <Route path="/logout" element={<Logout />} />
         {/* Protected Routes */}
         <Route
           path="/home"

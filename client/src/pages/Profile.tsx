@@ -24,9 +24,12 @@ const Profile: React.FC = () => {
           return;
         }
 
-        const response = await axios.get("/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "http://localhost:5000/api/auth/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         setUser(response.data);
       } catch (error) {
@@ -93,7 +96,6 @@ const Profile: React.FC = () => {
           <button
             onClick={() => {
               localStorage.removeItem("token");
-              localStorage.removeItem("user");
               navigate("/login");
             }}
             className="w-full bg-red-500 text-white py-2 rounded-md font-semibold hover:bg-red-600 transition-colors"
