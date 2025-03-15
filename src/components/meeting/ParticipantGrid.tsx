@@ -1,136 +1,193 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useWebRTC } from '../../hooks/useWebRTC';
-import { MicOff, VideoOff, User } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { MicOff, VideoOff } from 'lucide-react';
 
 export const ParticipantGrid: React.FC = () => {
-  const { participants, localStream, isAudioEnabled, isVideoEnabled } = useWebRTC();
+  const { participants, localStream, isVideoEnabled, isAudioEnabled } = useWebRTC();
   const { authState } = useAuth();
-  const [gridLayout, setGridLayout] = useState('grid-cols-1');
-
-  // Filter out any participant that might be the local user to avoid duplication
+  
+  // Calculate grid layout
+  const getGridClass = () => {
+    const count = participants.length + 1; // +1 for local user
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-1 md:grid-cols-2';
+    if (count <= 4) return 'grid-cols-2';
+    if (count <= 9) return 'grid-cols-2 md:grid-cols-3';
+    return 'grid-cols-3 md:grid-cols-4';
+  };
+  
+  // Filter out the current user from remote participants to avoid duplication
   const filteredParticipants = participants.filter(
-    participant => participant.id !== authState?.user?.uid
+    participant => participant.id !== authState.user?.uid
   );
-
-  // Determine grid layout based on number of participants
-  useEffect(() => {
-    const totalParticipants = filteredParticipants.length + 1; // +1 for local user
-    
-    if (totalParticipants === 1) {
-      setGridLayout('grid-cols-1');
-    } else if (totalParticipants === 2) {
-      setGridLayout('grid-cols-1 md:grid-cols-2');
-    } else if (totalParticipants <= 4) {
-      setGridLayout('grid-cols-1 md:grid-cols-2');
-    } else if (totalParticipants <= 9) {
-      setGridLayout('grid-cols-1 sm:grid-cols-2 md:grid-cols-3');
-    } else {
-      setGridLayout('grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4');
-    }
-  }, [filteredParticipants.length]);
-
+  
   return (
-    <div className={cn('grid gap-2 p-2 h-full', gridLayout)}>
+    <div className={`grid ${getGridClass()} gap-4 p-4 h-full`}>
       {/* Local participant */}
-      <div className="relative bg-muted rounded-lg overflow-hidden">
-        <div className="absolute top-2 left-2 z-10 bg-black/50 text-white px-2 py-1 rounded-md text-sm">
-          You
+      <LocalParticipant 
+        stream={localStream} 
+        displayName={authState.user?.displayName || 'You'} 
+        photoURL={authState.user?.photoURL || null}
+        isVideoEnabled={isVideoEnabled}
+        isAudioEnabled={isAudioEnabled}
+      />
+      
+      {/* Remote participants - now filtered to exclude current user */}
+      {filteredParticipants.map(participant => (
+        <RemoteParticipant 
+          key={participant.id}
+          participant={participant}
+        />
+      ))}
+    </div>
+  );
+};
+
+interface LocalParticipantProps {
+  stream: MediaStream | null;
+  displayName: string;
+  photoURL: string | null;
+  isVideoEnabled: boolean;
+  isAudioEnabled: boolean;
+}
+
+const LocalParticipant: React.FC<LocalParticipantProps> = ({ 
+  stream, 
+  displayName, 
+  photoURL,
+  isVideoEnabled,
+  isAudioEnabled
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+  
+  return (
+    <div className="relative bg-muted rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+      {isVideoEnabled && stream ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-gray-800">
+          {photoURL ? (
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={photoURL} alt={displayName} />
+              <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          ) : (
+            <Avatar className="h-24 w-24 bg-primary/10">
+              <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          )}
+          <p className="mt-2 text-white font-medium">{displayName}</p>
         </div>
-        
-        {localStream && localStream.getVideoTracks().length > 0 && isVideoEnabled ? (
-          <video
-            autoPlay
-            playsInline
-            muted
-            ref={(video) => {
-              if (video) video.srcObject = localStream;
-            }}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full min-h-[200px]">
-            {authState?.user?.photoURL ? (
-              <img 
-                src={authState.user.photoURL} 
-                alt="Your profile" 
-                className="h-24 w-24 rounded-full object-cover border-2 border-primary"
-              />
-            ) : (
-              <User className="h-16 w-16 text-muted-foreground mb-2" />
-            )}
-            <span className="mt-2 text-sm text-muted-foreground">
-              {authState?.user?.displayName || 'You'}
-            </span>
-          </div>
-        )}
-        
-        {/* Status indicators */}
-        <div className="absolute bottom-2 right-2 flex space-x-1">
-          {!isAudioEnabled && (
-            <div className="bg-black/50 p-1 rounded-full">
-              <MicOff className="h-4 w-4 text-red-500" />
-            </div>
-          )}
-          {!isVideoEnabled && (
-            <div className="bg-black/50 p-1 rounded-full">
-              <VideoOff className="h-4 w-4 text-red-500" />
-            </div>
-          )}
+      )}
+      
+      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2 text-white flex items-center justify-between">
+        <span className="text-sm font-medium">{displayName} (You)</span>
+        <div className="flex space-x-2">
+          {!isAudioEnabled && <MicOff className="h-4 w-4 text-red-500" />}
+          {!isVideoEnabled && <VideoOff className="h-4 w-4 text-red-500" />}
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Remote participants */}
-      {filteredParticipants.map((participant) => (
-        <div key={participant.id} className="relative bg-muted rounded-lg overflow-hidden">
-          <div className="absolute top-2 left-2 z-10 bg-black/50 text-white px-2 py-1 rounded-md text-sm">
-            {participant.displayName || 'Guest'}
-          </div>
-          
-          {participant.stream && participant.videoEnabled ? (
-            <video
-              autoPlay
-              playsInline
-              ref={(video) => {
-                if (video && participant.stream) {
-                  video.srcObject = participant.stream;
-                }
-              }}
-              className="w-full h-full object-cover"
-            />
+interface RemoteParticipantProps {
+  participant: {
+    id: string;
+    displayName: string | null;
+    stream: MediaStream | null;
+    audioEnabled: boolean;
+    videoEnabled: boolean;
+    photoURL?: string | null;
+  };
+}
+
+const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    if (videoRef.current && participant.stream) {
+      console.log('Setting remote stream for participant:', participant.id);
+      videoRef.current.srcObject = participant.stream;
+      
+      // Add this to ensure the video plays
+      videoRef.current.play().catch(err => {
+        console.error('Error playing remote video:', err);
+      });
+    }
+  }, [participant.stream, participant.id]);
+  
+  // Simplify the video tracks check
+  const hasVideoTracks = !!participant.stream?.getVideoTracks().length && participant.videoEnabled;
+  
+  // Debug the stream status
+  useEffect(() => {
+    if (participant.stream) {
+      console.log(`Remote participant ${participant.id} stream:`, {
+        videoTracks: participant.stream.getVideoTracks().map(t => ({
+          enabled: t.enabled,
+          muted: t.muted,
+          id: t.id
+        })),
+        audioTracks: participant.stream.getAudioTracks().map(t => ({
+          enabled: t.enabled,
+          muted: t.muted,
+          id: t.id
+        }))
+      });
+    }
+  }, [participant.stream, participant.id]);
+  
+  return (
+    <div className="relative bg-muted rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+      {hasVideoTracks ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-white border border-black">
+          {participant.photoURL ? (
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={participant.photoURL} alt={participant.displayName || 'Participant'} />
+              <AvatarFallback>
+                {(participant.displayName || 'User').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full min-h-[200px]">
-              {participant.photoURL ? (
-                <img 
-                  src={participant.photoURL} 
-                  alt={`${participant.displayName || 'Guest'}'s profile`} 
-                  className="h-24 w-24 rounded-full object-cover border-2 border-primary"
-                />
-              ) : (
-                <User className="h-16 w-16 text-muted-foreground mb-2" />
-              )}
-              <span className="mt-2 text-sm text-muted-foreground">
-                {participant.displayName || 'Guest'}
-              </span>
-            </div>
+            <Avatar className="h-24 w-24 bg-primary/10">
+              <AvatarFallback>
+                {(participant.displayName || 'User').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           )}
-          
-          {/* Status indicators */}
-          <div className="absolute bottom-2 right-2 flex space-x-1">
-            {!participant.audioEnabled && (
-              <div className="bg-black/50 p-1 rounded-full">
-                <MicOff className="h-4 w-4 text-red-500" />
-              </div>
-            )}
-            {!participant.videoEnabled && (
-              <div className="bg-black/50 p-1 rounded-full">
-                <VideoOff className="h-4 w-4 text-red-500" />
-              </div>
-            )}
-          </div>
+          <p className="mt-2 text-black font-medium">{participant.displayName || 'Guest'}</p>
         </div>
-      ))}
+      )}
+      
+      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2 text-white flex items-center justify-between">
+        <span className="text-sm font-medium">{participant.displayName || 'Guest'}</span>
+        <div className="flex space-x-2">
+          {!participant.audioEnabled && <MicOff className="h-4 w-4 text-red-500" />}
+          {!hasVideoTracks && <VideoOff className="h-4 w-4 text-red-500" />}
+        </div>
+      </div>
     </div>
   );
 };

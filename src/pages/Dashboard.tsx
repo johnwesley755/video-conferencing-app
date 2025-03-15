@@ -208,7 +208,10 @@ export const Dashboard: React.FC = () => {
           
           <TabsContent value="past">
             {isLoading ? (
-              <div className="text-center py-8">Loading meetings...</div>
+              <div className="flex flex-col items-center justify-center min-h-screen p-4">
+                <div className="loader-spinner w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-muted-foreground">Loading your meetings...</p>
+              </div>
             ) : meetings.filter(m => !m.isActive).length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">You don't have any past meetings.</p>

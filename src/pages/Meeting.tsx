@@ -21,7 +21,7 @@ import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
 export const Meeting: React.FC = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
-  const { joinMeeting, isLoading, error } = useWebRTC();
+  const { joinMeeting, isLoading, error, participants } = useWebRTC();
   const { authState } = useAuth();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [meetingExists, setMeetingExists] = useState(true);
@@ -64,6 +64,26 @@ export const Meeting: React.FC = () => {
       };
     }
   }, [showPreJoinScreen, enableVideo, previewStream]);
+
+  // Add debugging effect for WebRTC connections - MOVED UP before any conditional returns
+  useEffect(() => {
+    // Debug WebRTC connections
+    const debugInterval = setInterval(() => {
+      console.log('Current participants:', participants.length);
+      
+      participants.forEach(p => {
+        console.log(`Participant ${p.id}:`, {
+          hasStream: !!p.stream,
+          videoTracks: p.stream?.getVideoTracks().length || 0,
+          audioTracks: p.stream?.getAudioTracks().length || 0,
+          videoEnabled: p.videoEnabled,
+          audioEnabled: p.audioEnabled
+        });
+      });
+    }, 10000); // Every 10 seconds
+    
+    return () => clearInterval(debugInterval);
+  }, [participants]);
 
   // Use useCallback to prevent infinite dependency loops
   const handleJoinMeeting = React.useCallback(async () => {
@@ -224,9 +244,7 @@ export const Meeting: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
         <h1 className="text-2xl font-bold mb-4">Joining Meeting...</h1>
-        <p className="text-muted-foreground">
-          Please wait while we connect you to the meeting.
-        </p>
+        <div className="loader-spinner w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
