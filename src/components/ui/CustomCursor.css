@@ -1,0 +1,73 @@
+body {
+  cursor: none;
+}
+
+a, button, input, textarea, select, [role="button"] {
+  cursor: none;
+}
+
+.cursor-dot {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.15s ease-in-out, transform 0.1s ease-out;
+}
+
+.cursor-dot--clicked {
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+.cursor-outline {
+  width: 35px;
+  height: 35px;
+  border: 2px solid hsl(var(--primary) / 0.3);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s ease-in-out, height 0.2s ease-in-out, opacity 0.15s ease-in-out, transform 0.3s ease-out;
+}
+
+.cursor-outline--clicked {
+  transform: translate(-50%, -50%) scale(0.8);
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+/* Add hover effect for interactive elements - change to hand pointer */
+a:hover ~ .cursor-dot,
+button:hover ~ .cursor-dot,
+[role="button"]:hover ~ .cursor-dot,
+input:hover ~ .cursor-dot,
+textarea:hover ~ .cursor-dot,
+select:hover ~ .cursor-dot {
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-size: contain;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+a:hover ~ .cursor-outline,
+button:hover ~ .cursor-outline,
+[role="button"]:hover ~ .cursor-outline,
+input:hover ~ .cursor-outline,
+textarea:hover ~ .cursor-outline,
+select:hover ~ .cursor-outline {
+  width: 40px;
+  height: 40px;
+  background-color: hsl(var(--primary) / 0.1);
+  border-radius: 50% 50% 50% 0;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Disable cursor on video elements */
+video {
+  cursor: auto;
+}
