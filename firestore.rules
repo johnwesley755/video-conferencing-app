@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read and write their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Meeting rules
+    match /meetings/{meetingId} {
+      // Anyone can read meeting details
+      allow read: if request.auth != null;
+      // Only authenticated users can create meetings
+      allow create: if request.auth != null;
+      // Only the meeting creator can update or delete
+      allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+      
+      // Participants collection
+      match /participants/{participantId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == participantId;
+      }
+      
+      // WebRTC signaling collections
+      match /offers/{offerId} {
+        allow read: if request.auth != null && resource.data.to == request.auth.uid;
+        allow create: if request.auth != null && request.resource.data.from == request.auth.uid;
+      }
+      
+      match /answers/{answerId} {
+        allow read: if request.auth != null && resource.data.to == request.auth.uid;
+        allow create: if request.auth != null && request.resource.data.from == request.auth.uid;
+      }
+      
+      match /candidates/{candidateId} {
+        allow read: if request.auth != null && resource.data.to == request.auth.uid;
+        allow create: if request.auth != null && request.resource.data.from == request.auth.uid;
+      }
+    }
+  }
+}
