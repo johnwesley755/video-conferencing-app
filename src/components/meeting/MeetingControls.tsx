@@ -1,30 +1,44 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useWebRTC } from '../../hooks/useWebRTC';
-import { Button } from '../ui/button';
-import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, MessageSquare } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useWebRTC } from "../../hooks/useWebRTC";
+import { Button } from "../ui/button";
+import {
+  Mic,
+  MicOff,
+  Video as VideoIcon,
+  VideoOff,
+  PhoneOff,
+  MessageSquare,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface MeetingControlsProps {
   onToggleChat: () => void;
 }
 
-export const MeetingControls: React.FC<MeetingControlsProps> = ({ onToggleChat }) => {
-  const { 
-    toggleAudio, 
-    toggleVideo, 
-    leaveMeeting, 
-    isAudioEnabled, 
-    isVideoEnabled 
+export const MeetingControls: React.FC<MeetingControlsProps> = ({
+  onToggleChat,
+}) => {
+  const {
+    toggleAudio,
+    toggleVideo,
+    leaveMeeting,
+    isAudioEnabled,
+    isVideoEnabled,
   } = useWebRTC();
-  
+
   const navigate = useNavigate();
-  
+
   const handleLeaveMeeting = () => {
     leaveMeeting();
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
-  
+
   return (
     <div className="controls-container">
       <TooltipProvider>
@@ -33,36 +47,52 @@ export const MeetingControls: React.FC<MeetingControlsProps> = ({ onToggleChat }
             <Button
               variant="outline"
               size="icon"
-              className={`rounded-full h-12 w-12 ${!isAudioEnabled ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}`}
+              className={`rounded-full h-12 w-12 ${
+                !isAudioEnabled
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : ""
+              }`}
               onClick={toggleAudio}
             >
-              {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {isAudioEnabled ? (
+                <Mic className="h-5 w-5" />
+              ) : (
+                <MicOff className="h-5 w-5" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isAudioEnabled ? 'Mute' : 'Unmute'}</p>
+            <p>{isAudioEnabled ? "Mute" : "Unmute"}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="outline"
               size="icon"
-              className={`rounded-full h-12 w-12 ${!isVideoEnabled ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}`}
+              className={`rounded-full h-12 w-12 ${
+                !isVideoEnabled
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : ""
+              }`}
               onClick={toggleVideo}
             >
-              {isVideoEnabled ? <VideoIcon className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {isVideoEnabled ? (
+                <VideoIcon className="h-5 w-5" />
+              ) : (
+                <VideoOff className="h-5 w-5" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}</p>
+            <p>{isVideoEnabled ? "Turn off camera" : "Turn on camera"}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -80,7 +110,7 @@ export const MeetingControls: React.FC<MeetingControlsProps> = ({ onToggleChat }
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

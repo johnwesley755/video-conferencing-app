@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useAuth } from '../../hooks/useAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
@@ -22,6 +22,21 @@ export const ParticipantGrid: React.FC = () => {
   const filteredParticipants = participants.filter(
     participant => participant.id !== authState.user?.uid
   );
+  
+  // Log participants for debugging
+  useEffect(() => {
+    console.log('ParticipantGrid rendering with participants:', 
+      filteredParticipants.map(p => ({
+        id: p.id,
+        name: p.displayName,
+        hasStream: !!p.stream,
+        videoTracks: p.stream?.getVideoTracks().length || 0,
+        audioTracks: p.stream?.getAudioTracks().length || 0,
+        videoEnabled: p.videoEnabled,
+        audioEnabled: p.audioEnabled
+      }))
+    );
+  }, [filteredParticipants]);
   
   return (
     <div className={`grid ${getGridClass()} gap-4 p-4 h-full`}>
@@ -67,6 +82,24 @@ const LocalParticipant: React.FC<LocalParticipantProps> = ({
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
+  
+  // Log local stream status for debugging
+  useEffect(() => {
+    if (stream) {
+      console.log('Local stream status:', {
+        videoTracks: stream.getVideoTracks().map(t => ({
+          enabled: t.enabled,
+          muted: t.muted,
+          id: t.id
+        })),
+        audioTracks: stream.getAudioTracks().map(t => ({
+          enabled: t.enabled,
+          muted: t.muted,
+          id: t.id
+        }))
+      });
+    }
+  }, [stream, isVideoEnabled, isAudioEnabled]);
   
   return (
     <div className="relative bg-muted rounded-lg overflow-hidden aspect-video flex items-center justify-center">
@@ -119,20 +152,62 @@ interface RemoteParticipantProps {
 const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // More aggressive approach to setting up the video stream
   useEffect(() => {
     if (videoRef.current && participant.stream) {
-      console.log('Setting remote stream for participant:', participant.id);
-      videoRef.current.srcObject = participant.stream;
-      
-      // Add this to ensure the video plays
-      videoRef.current.play().catch(err => {
-        console.error('Error playing remote video:', err);
+      console.log(`Setting remote stream for participant ${participant.id}:`, {
+        videoTracks: participant.stream.getVideoTracks().length,
+        audioTracks: participant.stream.getAudioTracks().length,
+        videoEnabled: participant.videoEnabled,
+        audioEnabled: participant.audioEnabled
       });
+      
+      // Ensure we're working with a clean element
+      if (videoRef.current.srcObject !== participant.stream) {
+        videoRef.current.srcObject = null;
+        videoRef.current.srcObject = participant.stream;
+        
+        // Force play the video with retry logic
+        const attemptPlay = async () => {
+          try {
+            if (videoRef.current) {
+              await videoRef.current.play();
+              console.log(`Successfully playing video for ${participant.id}`);
+            }
+          } catch (err) {
+            console.error(`Error playing video for ${participant.id}:`, err);
+            
+            // Set up a retry mechanism
+            setTimeout(() => {
+              if (videoRef.current) {
+                videoRef.current.play().catch(e => {
+                  console.error(`Retry failed for ${participant.id}:`, e);
+                  
+                  // Last resort - try on user interaction
+                  document.addEventListener('click', () => {
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(finalErr => 
+                        console.error(`Final attempt failed for ${participant.id}:`, finalErr)
+                      );
+                    }
+                  }, { once: true });
+                });
+              }
+            }, 1000);
+          }
+        };
+        
+        attemptPlay();
+      }
     }
-  }, [participant.stream, participant.id]);
+  }, [participant.stream, participant.id, participant.videoEnabled]);
   
-  // Simplify the video tracks check
-  const hasVideoTracks = !!participant.stream?.getVideoTracks().length && participant.videoEnabled;
+  // Improved check for video tracks and enabled state
+  const hasVideoTracks = useMemo(() => {
+    return !!participant.stream && 
+           participant.stream.getVideoTracks().length > 0 && 
+           participant.videoEnabled;
+  }, [participant.stream, participant.videoEnabled]);
   
   // Debug the stream status
   useEffect(() => {
@@ -147,10 +222,12 @@ const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) =>
           enabled: t.enabled,
           muted: t.muted,
           id: t.id
-        }))
+        })),
+        videoEnabled: participant.videoEnabled,
+        audioEnabled: participant.audioEnabled
       });
     }
-  }, [participant.stream, participant.id]);
+  }, [participant.stream, participant.id, participant.videoEnabled, participant.audioEnabled]);
   
   return (
     <div className="relative bg-muted rounded-lg overflow-hidden aspect-video flex items-center justify-center">
@@ -162,7 +239,7 @@ const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) =>
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="flex flex-col items-center justify-center h-full w-full bg-white border border-black">
+        <div className="flex flex-col items-center justify-center h-full w-full bg-gray-800">
           {participant.photoURL ? (
             <Avatar className="h-24 w-24">
               <AvatarImage src={participant.photoURL} alt={participant.displayName || 'Participant'} />
@@ -177,7 +254,7 @@ const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) =>
               </AvatarFallback>
             </Avatar>
           )}
-          <p className="mt-2 text-black font-medium">{participant.displayName || 'Guest'}</p>
+          <p className="mt-2 text-white font-medium">{participant.displayName || 'Guest'}</p>
         </div>
       )}
       
@@ -185,7 +262,7 @@ const RemoteParticipant: React.FC<RemoteParticipantProps> = ({ participant }) =>
         <span className="text-sm font-medium">{participant.displayName || 'Guest'}</span>
         <div className="flex space-x-2">
           {!participant.audioEnabled && <MicOff className="h-4 w-4 text-red-500" />}
-          {!hasVideoTracks && <VideoOff className="h-4 w-4 text-red-500" />}
+          {!participant.videoEnabled && <VideoOff className="h-4 w-4 text-red-500" />}
         </div>
       </div>
     </div>

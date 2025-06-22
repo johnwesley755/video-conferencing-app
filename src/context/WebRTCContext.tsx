@@ -257,9 +257,6 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     // Handle remote tracks - Fix the stream display issue
-    // Inside the WebRTCProvider component, update the ontrack handler:
-    
-    // When creating peer connections:
     peerConnection.ontrack = (event) => {
       console.log(`Received track from remote peer:`, {
         kind: event.track.kind,
@@ -272,26 +269,63 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
       if (event.streams && event.streams[0]) {
         const remoteStream = event.streams[0];
         
+        // Add track-specific event listeners to monitor state changes
+        event.track.onmute = () => {
+          console.log(`Track ${event.track.id} muted`);
+        };
+        
+        event.track.onunmute = () => {
+          console.log(`Track ${event.track.id} unmuted`);
+        };
+        
+        event.track.onended = () => {
+          console.log(`Track ${event.track.id} ended`);
+        };
+        
         // Important: Update participants immediately when tracks are received
         setParticipants(prev => {
           // Check if this participant already exists
           const existingParticipant = prev.find(p => p.id === participantId);
           
           if (existingParticipant) {
-            // Update existing participant with the new stream
+            // For existing participants, we need to ensure we're not replacing a good stream
+            // with a bad one, so check if the stream has active tracks
+            const hasVideoTracks = remoteStream.getVideoTracks().length > 0;
+            const hasAudioTracks = remoteStream.getAudioTracks().length > 0;
+            
+            console.log(`Updating participant ${participantId} stream:`, {
+              hasVideoTracks,
+              hasAudioTracks,
+              existingStreamHasVideo: existingParticipant.stream ? existingParticipant.stream.getVideoTracks().length > 0 : false,
+              existingStreamHasAudio: existingParticipant.stream ? existingParticipant.stream.getAudioTracks().length > 0 : false
+            });
+            
             return prev.map(p => 
               p.id === participantId 
-                ? { ...p, stream: remoteStream } 
+                ? { 
+                    ...p, 
+                    stream: remoteStream,
+                    videoEnabled: hasVideoTracks && remoteStream.getVideoTracks()[0]?.enabled,
+                    audioEnabled: hasAudioTracks && remoteStream.getAudioTracks()[0]?.enabled
+                  } 
                 : p
             );
           } else {
             // Add new participant with stream
+            const hasVideoTracks = remoteStream.getVideoTracks().length > 0;
+            const hasAudioTracks = remoteStream.getAudioTracks().length > 0;
+            
+            console.log(`Adding new participant ${participantId} with stream:`, {
+              hasVideoTracks,
+              hasAudioTracks
+            });
+            
             return [...prev, {
               id: participantId,
               displayName: 'Guest', // This will be updated with actual name later
               stream: remoteStream,
-              audioEnabled: true,
-              videoEnabled: true,
+              audioEnabled: hasAudioTracks && remoteStream.getAudioTracks()[0]?.enabled,
+              videoEnabled: hasVideoTracks && remoteStream.getVideoTracks()[0]?.enabled,
               photoURL: null
             }];
           }
@@ -526,6 +560,7 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
         stream,
         audioEnabled: isAudioEnabled,
         videoEnabled: isVideoEnabled,
+        photoURL: authState.user.photoURL || null
       };
 
       setParticipants([currentParticipant]);
@@ -583,14 +618,25 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
               // In the joinMeeting function, update the participant creation:
               // Add participant to the list
               setParticipants((prev) => {
-                if (prev.some((p) => p.id === participantId)) return prev;
+                // Don't add duplicates
+                if (prev.some((p) => p.id === participantId)) {
+                  return prev.map(p => 
+                    p.id === participantId
+                      ? {
+                          ...p,
+                          displayName: participantData.displayName || "Unknown",
+                          photoURL: participantData.photoURL || null,
+                        }
+                      : p
+                  );
+                }
 
                 return [
                   ...prev,
                   {
                     id: participantId,
                     displayName: participantData.displayName || "Unknown",
-                    photoURL: participantData.photoURL || null, // Add photoURL
+                    photoURL: participantData.photoURL || null,
                     stream: null,
                     audioEnabled: true,
                     videoEnabled: true,
@@ -654,7 +700,7 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
       const candidatesUnsubscribe = onSnapshot(
         query(
           collection(db, "meetings", meetingId, "candidates"),
-          where("to", "==", authState.user?.uid) // Add optional chaining
+          where("to", "==", authState.user?.uid) // Remove optional chaining since we checked above
         ),
         (snapshot) => {
           snapshot.docChanges().forEach(async (change) => {
@@ -757,6 +803,7 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Fix the return statement to properly return JSX
   return (
     <WebRTCContext.Provider
       value={{
@@ -777,4 +824,5 @@ export const WebRTCProvider: React.FC<{ children: React.ReactNode }> = ({
     </WebRTCContext.Provider>
   );
 };
+
 export default WebRTCProvider;

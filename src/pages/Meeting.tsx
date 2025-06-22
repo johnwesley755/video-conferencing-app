@@ -69,19 +69,19 @@ export const Meeting: React.FC = () => {
   useEffect(() => {
     // Debug WebRTC connections
     const debugInterval = setInterval(() => {
-      console.log('Current participants:', participants.length);
-      
-      participants.forEach(p => {
+      console.log("Current participants:", participants.length);
+
+      participants.forEach((p) => {
         console.log(`Participant ${p.id}:`, {
           hasStream: !!p.stream,
           videoTracks: p.stream?.getVideoTracks().length || 0,
           audioTracks: p.stream?.getAudioTracks().length || 0,
           videoEnabled: p.videoEnabled,
-          audioEnabled: p.audioEnabled
+          audioEnabled: p.audioEnabled,
         });
       });
     }, 10000); // Every 10 seconds
-    
+
     return () => clearInterval(debugInterval);
   }, [participants]);
 
